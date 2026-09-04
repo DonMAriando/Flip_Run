@@ -36,16 +36,34 @@ seguro saca ~150 puntos; el mismo nivel jugado con ambición saca ~2200.
 
 ## Ejecutar en local
 
-Sin build ni dependencias. Hace falta servirlo por HTTP porque usa módulos ES:
+Sin dependencias. Hay dos formas y conviene saber por qué existen las dos.
+
+**Para desarrollar**, servido por HTTP (recarga limpia, archivos separados, sin build):
 
 ```bash
 node tools/serve.mjs 8080
 ```
 
-Y abrir `http://localhost:8080`. Abrir `index.html` con doble click **no** funciona: el
-navegador bloquea los módulos ES por `file://` y no carga nada del juego. Si eso pasa,
-en vez de un menú muerto que no responde a nada aparece una pantalla que lo explica y
-te da el comando (`#boot` en `index.html`, con guarda de arranque de 1.5 s).
+Y abrir `http://localhost:8080`.
+
+**Para sólo jugarlo**, un archivo único que se abre con doble click:
+
+```bash
+node tools/build.mjs
+```
+
+Genera `dist/flip-run.html`, autocontenido y sin ninguna petición externa.
+
+El motivo de la segunda forma: `index.html` usa módulos ES, y por `file://` el navegador
+los bloquea. Abrirlo con doble click dejaba un menú dibujado que no responde a nada,
+indistinguible de un juego roto. Hoy eso no pasa en silencio: una guarda de arranque de
+1.5 s (`#boot`) detecta que el script no cargó y muestra qué hacer.
+
+`tools/build.mjs` es un empaquetador diminuto a propósito: asume que `src/` usa sólo
+`import { a } from './mod.js'` y `export function|const`, ordena los módulos por
+dependencias y falla ruidosamente si `index.html` cambió o si quedó alguna referencia a
+un archivo local. Si algún día hace falta más que eso, mejor un bundler de verdad que
+estirar este.
 
 Flags útiles: `?autopilot=1` deja que el controlador heurístico juegue solo (y expone
 `window.__fliprun.info()`), y `?debug=1` expone el diagnóstico sin el autopilot. En

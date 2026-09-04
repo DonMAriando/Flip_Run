@@ -79,8 +79,11 @@
     <div id="boot" class="boot hidden">
       <h2>El juego no pudo arrancar</h2>
       <p id="bootReason">Hay que servir la carpeta por HTTP: usa módulos ES y el navegador los bloquea al abrir el archivo directamente.</p>
+      <p class="boot-note">Una sola vez, para poder abrirlo con doble click:</p>
+      <code>node tools/build.mjs</code>
+      <p class="boot-note">y abrí <strong>dist/flip-run.html</strong>. O levantá un servidor:</p>
       <code>node tools/serve.mjs 8080</code>
-      <p class="boot-note">Después abrí <strong>http://localhost:8080</strong></p>
+      <p class="boot-note">y abrí <strong>http://localhost:8080</strong></p>
     </div>
   </main>
 

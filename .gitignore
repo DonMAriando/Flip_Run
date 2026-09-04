@@ -1,0 +1,2 @@
+# Artefacto de build: se regenera con `node tools/build.mjs` en medio segundo.
+dist/

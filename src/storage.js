@@ -1,9 +1,29 @@
 import { STORAGE_KEYS } from './config.js';
 import { todayKey } from './rng.js';
 
+// Todo acceso a localStorage pasa por acá. Abierto como file:// o en modos de
+// privacidad estrictos, `localStorage` puede tirar SecurityError con sólo
+// tocarlo: sin esta guarda el módulo explotaba al cargar y se caía el juego
+// entero por no poder recordar un récord.
+function readRaw(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeRaw(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* privado, cuota llena o sin acceso: se juega igual, sin persistencia */
+  }
+}
+
 function readJson(key, fallback) {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = readRaw(key);
     return raw ? JSON.parse(raw) : fallback;
   } catch {
     return fallback;
@@ -11,15 +31,11 @@ function readJson(key, fallback) {
 }
 
 function writeJson(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* modo privado o cuota llena: el juego sigue funcionando sin persistencia */
-  }
+  writeRaw(key, JSON.stringify(value));
 }
 
 function readNumber(key) {
-  const n = Number(localStorage.getItem(key));
+  const n = Number(readRaw(key));
   return Number.isFinite(n) ? n : 0;
 }
 
@@ -27,7 +43,7 @@ function readNumber(key) {
 const cache = {
   best: readNumber(STORAGE_KEYS.best),
   bestDistance: readNumber(STORAGE_KEYS.bestDistance),
-  muted: localStorage.getItem(STORAGE_KEYS.sound) === '0',
+  muted: readRaw(STORAGE_KEYS.sound) === '0',
   daily: readJson(STORAGE_KEYS.daily, null),
   ghost: readJson(STORAGE_KEYS.ghost, null)
 };
@@ -50,7 +66,7 @@ export const storage = {
 
   setMuted(value) {
     cache.muted = value;
-    try { localStorage.setItem(STORAGE_KEYS.sound, value ? '0' : '1'); } catch {}
+    writeRaw(STORAGE_KEYS.sound, value ? '0' : '1');
   },
 
   // Devuelve true si el run fue récord en su modo.
@@ -58,12 +74,12 @@ export const storage = {
     let record = false;
     if (score > cache.best) {
       cache.best = score;
-      try { localStorage.setItem(STORAGE_KEYS.best, String(score)); } catch {}
+      writeRaw(STORAGE_KEYS.best, String(score));
       record = true;
     }
     if (distance > cache.bestDistance) {
       cache.bestDistance = distance;
-      try { localStorage.setItem(STORAGE_KEYS.bestDistance, String(distance)); } catch {}
+      writeRaw(STORAGE_KEYS.bestDistance, String(distance));
     }
     return record;
   },
