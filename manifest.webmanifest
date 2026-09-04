@@ -1,0 +1,10 @@
+{
+  "name": "FLIP//RUN",
+  "short_name": "FLIPRUN",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#070914",
+  "theme_color": "#070914",
+  "orientation": "portrait-primary",
+  "description": "Un runner reactivo de un solo toque. Invertí la gravedad. No frenes."
+}

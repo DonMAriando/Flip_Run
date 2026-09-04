@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#070914" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>FLIP//RUN</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="app">
+    <canvas id="game" aria-label="FLIP RUN"></canvas>
+
+    <section id="hud" class="hud hidden" aria-live="polite">
+      <div class="hud-left">
+        <div class="score" id="score">0</div>
+        <div class="best" id="best">BEST 0</div>
+      </div>
+      <div class="hud-right">
+        <div id="combo" class="combo">x1</div>
+        <div id="fever" class="fever hidden">FEVER</div>
+      </div>
+    </section>
+
+    <section id="overlay" class="overlay">
+      <div class="logo-wrap">
+        <div class="eyebrow">ONE TOUCH / ZERO BRAKES</div>
+        <h1>FLIP<span>//</span>RUN</h1>
+        <p id="subtitle">TOCÁ PARA INVERTIR LA GRAVEDAD</p>
+      </div>
+
+      <div id="menu" class="panel">
+        <button id="playBtn" class="primary">JUGAR</button>
+        <button id="dailyBtn" class="secondary">DAILY RUN</button>
+        <div class="microcopy">Pantalla · Click · Espacio</div>
+      </div>
+
+      <div id="gameOver" class="panel hidden">
+        <div id="newRecord" class="record hidden">NUEVO RÉCORD</div>
+        <div id="finalScore" class="final-score">0</div>
+        <div id="runStats" class="stats">0 PERFECT · x1 MAX</div>
+        <button id="retryBtn" class="primary">OTRA</button>
+        <button id="homeBtn" class="secondary">MENÚ</button>
+        <div class="microcopy">También podés tocar cualquier parte para reiniciar</div>
+      </div>
+    </section>
+
+    <button id="soundBtn" class="sound" aria-label="Activar o desactivar sonido">♪</button>
+    <div id="toast" class="toast"></div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
