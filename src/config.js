@@ -63,6 +63,23 @@ export const LEVEL = {
   // Pista libre antes del primer patrón. Sin esto el primer obstáculo llegaba
   // a los 0.9 s: morías antes de registrar que la partida había empezado.
   introRunway: 760,
+  // Apertura fija: los primeros metros usan semilla constante, así son
+  // idénticos en toda partida y en todas las semillas. El procedural puro es
+  // hostil a la maestría por memorización: si el nivel cambia siempre, morir no
+  // te enseña nada específico. Con el arranque fijo el jugador ve su progreso
+  // sobre la misma geometría, y todos los runs comparten el mismo tramo inicial,
+  // que es condición para comparar scores.
+  // Se mide en patrones, no en metros: es lo que se controla de verdad. Corto a
+  // propósito, porque el tramo fijo tiene que cubrir toda la banda donde el
+  // jugador nuevo aprende, sin comerse el run del experto.
+  openingChunks: 4,
+  openingSeed: 'FLIPRUN-OPENING-1',
+  // Ritmo de respiros (patrones sin obstáculos). Sorteados al azar salían dos
+  // seguidos o ninguno en mucho rato, y al quedar siempre elegibles diluían la
+  // dificultad tardía. Un respiro es una decisión de pacing, no una tirada:
+  // nunca antes de breatherMin patrones, obligatorio a los breatherMax.
+  breatherMin: 4,
+  breatherMax: 9,
   // Holgura sobre la distancia teórica que exige un cambio de altura. Bajarlo
   // aprieta el juego; si baja demasiado, `tools/audit.mjs` empieza a encontrar
   // tramos imposibles.

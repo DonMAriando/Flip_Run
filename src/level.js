@@ -103,6 +103,29 @@ const PATTERNS = {
     return { length: x + w, entry: firstWin, exit: lastWin };
   },
 
+  // Tres bloques del mismo lado. Es el complemento de stagger3: en vez de
+  // obligar a cruzar el corredor, enseña a sostener una altura con toques
+  // cortos, que es la habilidad de base del juego.
+  sameSideRun({ rng, d, travel }, out) {
+    const onFloor = rng() < 0.5;
+    const w = range(rng, 50, 72);
+    const count = 2 + (rng() < 0.5 ? 1 : 0);
+    let x = 0;
+    let firstWin = null;
+    let lastWin = null;
+
+    for (let i = 0; i < count; i++) {
+      const h = lerp(130, 205, d) * range(rng, 0.88, 1.08);
+      const wi = onFloor ? floorWindow(h) : ceilWindow(h);
+      if (i > 0) x += w + Math.max(lerp(200, 150, d), travel(windowGap(lastWin, wi)));
+      out.obstacles.push(onFloor ? floorBlock(x, w, h) : ceilBlock(x, w, h));
+      out.orbs.push(orbAtFace(x + w / 2, onFloor ? FLOOR - h : CEIL + h, onFloor ? -1 : 1));
+      if (i === 0) firstWin = wi;
+      lastWin = wi;
+    }
+    return { length: x + w, entry: firstWin, exit: lastWin };
+  },
+
   wideGate({ rng, d }, out) {
     const w = range(rng, 52, 78);
     const win = gate(out, 0, w, lerp(210, 165, d), range(rng, 0.22, 0.78), rng);
@@ -122,6 +145,26 @@ const PATTERNS = {
       const p = i / (count - 1);
       const curve = flip ? Math.sin(p * Math.PI) : 1 - Math.sin(p * Math.PI);
       out.orbs.push({ x: p * len, y: gapCenterY(lerp(t0, t1, curve), 0) });
+    }
+    return { length: len, entry: fullWindow(), exit: fullWindow() };
+  },
+
+  // Onda de dos crestas, sin obstáculos. Entrena el ritmo de subir y bajar
+  // sostenido, que es lo que separa flotar de caerse. Cobrar la cadena entera
+  // exige encadenar con inercia, no ir orbe por orbe.
+  orbWave({ rng, travel }, out) {
+    const lo = range(rng, 0.16, 0.3);
+    const hi = range(rng, 0.7, 0.88);
+    const span = Math.abs(gapCenterY(hi, 0) - gapCenterY(lo, 0));
+    const len = Math.max(860, travel(span) * 3);
+    const count = 9 + Math.floor(rng() * 4);
+    const rising = rng() < 0.5;
+
+    for (let i = 0; i < count; i++) {
+      const p = i / (count - 1);
+      const phase = (1 - Math.cos(p * Math.PI * 4)) / 2;
+      const t = lerp(lo, hi, rising ? phase : 1 - phase);
+      out.orbs.push({ x: p * len, y: gapCenterY(t, 0) });
     }
     return { length: len, entry: fullWindow(), exit: fullWindow() };
   },
@@ -294,16 +337,34 @@ const PATTERNS = {
 };
 
 const TIERS = [
-  { from: 0.00, names: ['singleSpike', 'stagger3', 'wideGate', 'orbArc'] },
+  { from: 0.00, names: ['singleSpike', 'stagger3', 'sameSideRun', 'wideGate', 'orbArc', 'orbWave'] },
   { from: 0.15, names: ['gateRun', 'pillarPair', 'pinch', 'spikeComb'] },
   { from: 0.42, names: ['narrowGate', 'zigzagGates', 'tunnel', 'crossPinch'] },
   { from: 0.70, names: ['needleGates', 'staircase'] }
 ];
 
+// Patrones sin obstáculos: recompensa sin riesgo. Sirven para dar aire después
+// de un tramo exigente, pero su frecuencia se controla por ritmo, no por azar.
+const BREATHERS = new Set(['orbArc', 'orbWave']);
+
 function eligible(d) {
   const names = [];
   for (const tier of TIERS) if (d >= tier.from) names.push(...tier.names);
   return names;
+}
+
+// Elige el patrón respetando el ritmo de respiros.
+function choosePattern(rng, d, sinceBreather, lastName) {
+  const all = eligible(d);
+  const forced = sinceBreather >= LEVEL.breatherMax;
+  const allowed = all.filter(n => (BREATHERS.has(n)
+    ? forced || sinceBreather >= LEVEL.breatherMin
+    : !forced));
+  const names = allowed.length ? allowed : all;
+
+  const name = names[Math.floor(rng() * names.length)];
+  // Un solo reintento para evitar repetir patrón; sigue siendo determinista.
+  return name === lastName ? names[Math.floor(rng() * names.length)] : name;
 }
 
 export function createLevel(seed) {
@@ -312,11 +373,17 @@ export function createLevel(seed) {
   let index = 0;
   let cursor = LEVEL.introRunway;
   let lastName = '';
+  let sinceBreather = 0;
+  // Secuencia de patrones generados. No la usa el juego: existe para poder
+  // auditar el ritmo desde las herramientas.
+  const patterns = [];
   // El jugador arranca apoyado en el piso.
   let prevExit = [FLOOR - R, FLOOR - R];
 
   function generateChunk() {
-    const rng = chunkRng(seed, index);
+    // La apertura ignora la semilla del run: mismo arranque para todos, y el
+    // tramo procedural arranca siempre desde el mismo estado.
+    const rng = chunkRng(index < LEVEL.openingChunks ? LEVEL.openingSeed : seed, index);
     const d = Math.min(1, cursor / LEVEL.difficultyDistance);
     const speed = speedAt(cursor);
     const ctx = {
@@ -325,18 +392,12 @@ export function createLevel(seed) {
       travel: dy => travelFor(dy, speed, LEVEL.travelSafety, LEVEL.travelBase)
     };
 
-    let name;
-    if (index === 0) {
-      // El primer tramo es siempre la cadena de orbes: no tiene obstáculos, así
-      // que enseña a maniobrar y premia antes de poder matarte.
-      name = 'orbArc';
-    } else {
-      const names = eligible(d);
-      name = names[Math.floor(rng() * names.length)];
-      // Un solo reintento para evitar repetir patrón; sigue siendo determinista.
-      if (name === lastName) name = names[Math.floor(rng() * names.length)];
-    }
+    // El primer tramo es siempre la cadena de orbes: no tiene obstáculos, así
+    // que enseña a maniobrar y premia antes de poder matarte.
+    const name = index === 0 ? 'orbArc' : choosePattern(rng, d, sinceBreather, lastName);
     lastName = name;
+    sinceBreather = BREATHERS.has(name) ? 0 : sinceBreather + 1;
+    patterns.push(name);
 
     const out = { obstacles: [], orbs: [] };
     const shape = PATTERNS[name](ctx, out);
@@ -365,6 +426,7 @@ export function createLevel(seed) {
   return {
     obstacles,
     orbs,
+    patterns,
     ensureAhead(worldX) {
       while (cursor < worldX) generateChunk();
     },

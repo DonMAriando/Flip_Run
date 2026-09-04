@@ -69,6 +69,49 @@ Flags útiles: `?autopilot=1` deja que el controlador heurístico juegue solo (y
 `window.__fliprun.info()`), y `?debug=1` expone el diagnóstico sin el autopilot. En
 localhost el service worker se desregistra solo para no servir código viejo.
 
+## Procedural o niveles fijos
+
+La decisión de fondo del juego, y la respuesta es híbrido, pero no por evitar elegir:
+procedural y autoral alimentan dos motores de adicción distintos y casi opuestos.
+
+Flappy Bird es procedural y funciona porque el desafío es homogéneo: todos los caños son
+iguales, no hay nada que memorizar, la habilidad es control motor puro. Geometry Dash es
+autoral y funciona por lo contrario: morís 500 veces en el mismo nivel y lo aprendés
+cuadro por cuadro. **El procedural es activamente hostil a la maestría por memorización**:
+si el nivel cambia cada run, morir no te enseña nada específico.
+
+Lo autoral puro se descarta por una razón práctica: sin backend ni editor, el único autor
+de contenido es uno mismo, para siempre, y el juego se muere cuando el jugador termina lo
+que hay. El arma real de Geometry Dash es su editor y la comunidad, no sus niveles.
+
+Así que el reparto es:
+
+- **Apertura fija** (`LEVEL.openingChunks`): los primeros 4 patrones usan semilla
+  constante, así que son idénticos en toda partida y en todas las semillas. Terminan a
+  los ~373 m, con una mediana de run de ~835 m: el jugador nuevo, que muere entre 170 y
+  370 m, vive entero dentro del tramo memorizable y ve su progreso sobre la misma
+  geometría; el que ya sabe jugar tiene la mitad del run fresca.
+- **Cola procedural**, armada con el mismo vocabulario autoral, para que no se termine.
+- **Daily run**: semilla del día, igual para todos. Es la superficie competitiva, y ahí la
+  memorización sí juega porque hay varios intentos sobre la misma geometría.
+
+Vale aclarar qué significa "procedural" acá: no hay azar generando geometría. Hay 16
+patrones escritos a mano y el generador sólo los ordena y calcula el espaciado. El techo
+de calidad lo pone el vocabulario y las reglas de secuencia, no el generador.
+
+Beneficio medible de la apertura fija: la dispersión de dificultad entre semillas (mismo
+bot, distinta semilla) bajó de 507–1146 m a 677–929 m, de 2.26x a 1.37x. Esa dispersión
+es ruido que contamina cualquier comparación de score.
+
+### Ritmo de respiros
+
+Dos patrones (`orbArc`, `orbWave`) no tienen obstáculos: son recompensa sin riesgo. Su
+frecuencia **no** se sortea, porque al azar salían dos pegados o ninguno en mucho rato, y
+al quedar siempre elegibles diluían la dificultad tardía (agregarlos bajó los obstáculos
+de 172 a 138 y subió la mediana del bot de 842 a 944 m). Un respiro es una decisión de
+pacing: nunca antes de `breatherMin` patrones, obligatorio a los `breatherMax`. Quedan en
+~14% de los patrones y `verify.mjs` lo controla.
+
 ## El arranque de la partida
 
 Los primeros tres segundos son los que deciden si alguien vuelve a jugar, así que están

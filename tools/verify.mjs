@@ -4,7 +4,7 @@ import { createGhost, createRecorder } from '../src/replay.js';
 import { createLevel } from '../src/level.js';
 import { createBot } from '../src/autopilot.js';
 import { speedAt } from '../src/physics.js';
-import { FIELD, TICK } from '../src/config.js';
+import { FIELD, LEVEL, TICK } from '../src/config.js';
 
 let failures = 0;
 function check(name, ok, detail = '') {
@@ -192,6 +192,59 @@ console.log('\nFLIP//RUN · verificación de la simulación\n');
     `mínimo ${minObstacle.toFixed(1)} s`);
   check('lo primero que aparece es un orbe, no una pared', intros.every(i => i.orbFirst),
     `primer orbe a los ${maxOrb.toFixed(1)} s como máximo`);
+}
+
+// 10. Apertura fija: mismo arranque para todos, divergencia después. Sin esto
+// no hay tramo memorizable ni scores comparables.
+{
+  const key = o => `${Math.round(o.x)}:${Math.round(o.y)}:${Math.round(o.w)}:${Math.round(o.h)}`;
+  const geometry = seed => {
+    const level = createLevel(seed);
+    level.ensureAhead(14000);
+    return level.obstacles;
+  };
+
+  const a = geometry('SEED-UNO');
+  const b = geometry('SEED-DOS');
+  let i = 0;
+  while (i < a.length && i < b.length && key(a[i]) === key(b[i])) i++;
+  const divergeX = i < a.length ? a[i].x : Infinity;
+
+  check('la apertura es idéntica en cualquier semilla', i > 0 && divergeX > FIELD.playerX,
+    `${LEVEL.openingChunks} patrones fijos, divergen a los ${Math.round(divergeX / 10)} m`);
+  check('pasada la apertura los niveles divergen', i < Math.min(a.length, b.length),
+    `${a.length} vs ${b.length} obstáculos en total`);
+}
+
+// 11. Ritmo de respiros: ni dos pegados ni tramos interminables sin aire.
+{
+  const BREATHERS = new Set(['orbArc', 'orbWave']);
+  let worstStreak = 0;
+  let tooClose = 0;
+  let breatherCount = 0;
+  let total = 0;
+
+  for (const seed of ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']) {
+    const level = createLevel(seed);
+    level.ensureAhead(20000);
+    let since = Infinity;
+    for (const [i, name] of level.patterns.entries()) {
+      total++;
+      if (!BREATHERS.has(name)) { since++; continue; }
+      breatherCount++;
+      // El primero es la apertura forzada: no cuenta contra el mínimo.
+      if (i > 0 && since < LEVEL.breatherMin) tooClose++;
+      worstStreak = Math.max(worstStreak, Math.min(since, LEVEL.breatherMax));
+      since = 0;
+    }
+    worstStreak = Math.max(worstStreak, Math.min(since, LEVEL.breatherMax));
+  }
+
+  const share = Math.round((breatherCount / total) * 100);
+  check('los respiros no se pegan', tooClose === 0,
+    `${breatherCount} respiros en ${total} patrones (${share}%), 0 antes de ${LEVEL.breatherMin}`);
+  check('no hay tramos sin aire', worstStreak <= LEVEL.breatherMax,
+    `racha máxima ${worstStreak} patrones sin respiro`);
 }
 
 console.log(`\n${failures === 0 ? 'Todo en orden.' : `${failures} chequeo(s) fallando.`}\n`);
