@@ -25,13 +25,15 @@ export function createUi() {
     retry: $('retryBtn'),
     home: $('homeBtn'),
     sound: $('soundBtn'),
-    toast: $('toast')
+    toast: $('toast'),
+    hint: $('hint')
   };
 
   // Cache de los valores ya escritos: el HUD se refresca cada frame y no
   // conviene tocar el DOM si nada cambió.
   const shown = { score: -1, meters: -1, combo: -1, fever: null, decay: -1 };
   let toastTimer = 0;
+  let hintTimer = 0;
 
   return {
     els,
@@ -116,6 +118,18 @@ export function createUi() {
       els.toast.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => els.toast.classList.remove('show'), 340);
+    },
+
+    hint(text, duration = 2800) {
+      clearTimeout(hintTimer);
+      els.hint.textContent = text;
+      els.hint.classList.add('show');
+      hintTimer = setTimeout(() => els.hint.classList.remove('show'), duration);
+    },
+
+    clearHint() {
+      clearTimeout(hintTimer);
+      els.hint.classList.remove('show');
     },
 
     setSoundMuted(muted) {

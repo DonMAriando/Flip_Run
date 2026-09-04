@@ -60,6 +60,9 @@ export const LEVEL = {
   restStart: 340,
   restMin: 150,
   difficultyDistance: 14000,
+  // Pista libre antes del primer patrón. Sin esto el primer obstáculo llegaba
+  // a los 0.9 s: morías antes de registrar que la partida había empezado.
+  introRunway: 760,
   // Holgura sobre la distancia teórica que exige un cambio de altura. Bajarlo
   // aprieta el juego; si baja demasiado, `tools/audit.mjs` empieza a encontrar
   // tramos imposibles.

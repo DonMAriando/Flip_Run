@@ -310,7 +310,7 @@ export function createLevel(seed) {
   const obstacles = [];
   const orbs = [];
   let index = 0;
-  let cursor = 240;
+  let cursor = LEVEL.introRunway;
   let lastName = '';
   // El jugador arranca apoyado en el piso.
   let prevExit = [FLOOR - R, FLOOR - R];
@@ -325,10 +325,17 @@ export function createLevel(seed) {
       travel: dy => travelFor(dy, speed, LEVEL.travelSafety, LEVEL.travelBase)
     };
 
-    const names = eligible(d);
-    let name = names[Math.floor(rng() * names.length)];
-    // Un solo reintento para evitar repetir patrón; sigue siendo determinista.
-    if (name === lastName) name = names[Math.floor(rng() * names.length)];
+    let name;
+    if (index === 0) {
+      // El primer tramo es siempre la cadena de orbes: no tiene obstáculos, así
+      // que enseña a maniobrar y premia antes de poder matarte.
+      name = 'orbArc';
+    } else {
+      const names = eligible(d);
+      name = names[Math.floor(rng() * names.length)];
+      // Un solo reintento para evitar repetir patrón; sigue siendo determinista.
+      if (name === lastName) name = names[Math.floor(rng() * names.length)];
+    }
     lastName = name;
 
     const out = { obstacles: [], orbs: [] };

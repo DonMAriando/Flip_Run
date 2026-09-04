@@ -149,6 +149,40 @@ button:active { transform: scale(.97); }
 .toast.fever { color: var(--accent); }
 .toast.combo { color: var(--accent2); }
 
+/* Cartel de aprendizaje: la mecánica de flotar tocando rápido no se descubre
+   sola, así que se enseña explícitamente hasta el primer récord. */
+.hint {
+  position: absolute; left: 50%; top: 62%; z-index: 5;
+  transform: translate(-50%, -50%);
+  padding: 10px 16px; border-radius: 999px;
+  background: rgba(6, 9, 20, .7); border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  font-size: 12px; font-weight: 900; letter-spacing: .16em; white-space: nowrap;
+  color: rgba(255, 255, 255, .9);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+}
+.hint.show { opacity: 1; }
+
+/* Pantalla de arranque fallido: no depende de --u ni de #stage porque en ese
+   escenario el JS del juego nunca corrió. */
+.boot {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 32px; text-align: center;
+  background: rgba(7, 9, 20, .96);
+  color: #fff;
+}
+.boot h2 { margin: 0; font-size: 22px; letter-spacing: .08em; }
+.boot p { margin: 0; max-width: 34em; font-size: 14px; line-height: 1.6; color: rgba(255, 255, 255, .72); }
+.boot code {
+  display: block; padding: 12px 18px; border-radius: 10px;
+  background: rgba(255, 255, 255, .08); border: 1px solid var(--line);
+  font-size: 14px; color: var(--accent); user-select: all;
+}
+.boot-note { font-size: 13px; }
+.boot.hidden { display: none; }
+
 .hidden { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {

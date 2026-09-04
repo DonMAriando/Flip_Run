@@ -3,6 +3,8 @@ import { createSim } from '../src/sim.js';
 import { createGhost, createRecorder } from '../src/replay.js';
 import { createLevel } from '../src/level.js';
 import { createBot } from '../src/autopilot.js';
+import { speedAt } from '../src/physics.js';
+import { FIELD, TICK } from '../src/config.js';
 
 let failures = 0;
 function check(name, ok, detail = '') {
@@ -160,6 +162,36 @@ console.log('\nFLIP//RUN · verificación de la simulación\n');
   const median = survived[Math.floor(survived.length / 2)];
   check('las runs no son infinitas ni instantáneas', median > 200 && median < 6000,
     `mediana ${median} m, rango ${survived[0]}–${survived[survived.length - 1]} m`);
+}
+
+// 9. Arranque: tiene que haber pista para entender que la partida empezó, y el
+// primer tramo no puede poder matarte.
+{
+  const timeToReach = worldX => {
+    let d = 0;
+    let t = 0;
+    const target = worldX - FIELD.playerX;
+    while (d < target && t < 30) { d += speedAt(d) * TICK; t += TICK; }
+    return t;
+  };
+
+  const seeds = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'SEED-A', 'SEED-RISK'];
+  const intros = seeds.map(s => {
+    const level = createLevel(s);
+    level.ensureAhead(8000);
+    return {
+      obstacle: timeToReach(level.obstacles[0].x),
+      orb: timeToReach(level.orbs[0].x),
+      orbFirst: level.orbs[0].x < level.obstacles[0].x
+    };
+  });
+
+  const minObstacle = Math.min(...intros.map(i => i.obstacle));
+  const maxOrb = Math.max(...intros.map(i => i.orb));
+  check('hay pista antes del primer obstáculo', minObstacle >= 2.5,
+    `mínimo ${minObstacle.toFixed(1)} s`);
+  check('lo primero que aparece es un orbe, no una pared', intros.every(i => i.orbFirst),
+    `primer orbe a los ${maxOrb.toFixed(1)} s como máximo`);
 }
 
 console.log(`\n${failures === 0 ? 'Todo en orden.' : `${failures} chequeo(s) fallando.`}\n`);

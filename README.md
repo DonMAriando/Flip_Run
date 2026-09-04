@@ -42,11 +42,29 @@ Sin build ni dependencias. Hace falta servirlo por HTTP porque usa módulos ES:
 node tools/serve.mjs 8080
 ```
 
-Y abrir `http://localhost:8080`. Abrir `index.html` con doble click **no** funciona.
+Y abrir `http://localhost:8080`. Abrir `index.html` con doble click **no** funciona: el
+navegador bloquea los módulos ES por `file://` y no carga nada del juego. Si eso pasa,
+en vez de un menú muerto que no responde a nada aparece una pantalla que lo explica y
+te da el comando (`#boot` en `index.html`, con guarda de arranque de 1.5 s).
 
 Flags útiles: `?autopilot=1` deja que el controlador heurístico juegue solo (y expone
 `window.__fliprun.info()`), y `?debug=1` expone el diagnóstico sin el autopilot. En
 localhost el service worker se desregistra solo para no servir código viejo.
+
+## El arranque de la partida
+
+Los primeros tres segundos son los que deciden si alguien vuelve a jugar, así que están
+fijados por contrato y cubiertos por `verify.mjs`:
+
+- **Pista libre** (`LEVEL.introRunway`): el primer obstáculo no puede llegar antes de los
+  2.5 s. Sin esto llegaba a los 0.9 s y morías antes de registrar que la partida arrancó.
+- **El primer tramo es siempre `orbArc`**: una cadena de orbes sin obstáculos. Enseña a
+  maniobrar y paga antes de poder matarte.
+- **Cartel de mecánica**: hasta el primer récord se muestra "TOCÁ RÁPIDO PARA FLOTAR",
+  porque flotar tapeando no se descubre por intuición y es la diferencia entre sobrevivir
+  y jugar.
+- El cartel de **NUEVO RÉCORD** no aparece en el primer run: no había nada que superar y
+  anunciarlo ahí le quita valor a cuando de verdad rompés tu marca.
 
 ## Los dos invariantes
 

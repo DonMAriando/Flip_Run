@@ -70,8 +70,35 @@
 
     <button id="soundBtn" class="sound" aria-label="Activar o desactivar sonido">♪</button>
     <div id="toast" class="toast"></div>
+    <div id="hint" class="hint"></div>
+    </div>
+
+    <!-- Si el juego no arranca, el fallo tiene que ser legible. El caso típico
+         es abrir el archivo con doble click: los módulos ES no cargan por
+         file:// y quedaría un menú que no responde a nada. -->
+    <div id="boot" class="boot hidden">
+      <h2>El juego no pudo arrancar</h2>
+      <p id="bootReason">Hay que servir la carpeta por HTTP: usa módulos ES y el navegador los bloquea al abrir el archivo directamente.</p>
+      <code>node tools/serve.mjs 8080</code>
+      <p class="boot-note">Después abrí <strong>http://localhost:8080</strong></p>
     </div>
   </main>
+
+  <script>
+    window.__fliprunBooted = false;
+    setTimeout(function () {
+      if (window.__fliprunBooted) return;
+      var box = document.getElementById('boot');
+      if (location.protocol === 'file:') {
+        document.getElementById('bootReason').textContent =
+          'Lo abriste como archivo local (file://). El navegador bloquea los módulos ES, así que no se cargó nada del juego. Hay que servirlo por HTTP.';
+      } else {
+        document.getElementById('bootReason').textContent =
+          'Se sirvió la página pero el script no cargó. Revisá la consola del navegador y que exista la carpeta src/.';
+      }
+      box.classList.remove('hidden');
+    }, 1500);
+  </script>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

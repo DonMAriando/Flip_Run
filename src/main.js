@@ -99,6 +99,12 @@ function startRun(nextMode = mode) {
 
   ui.resetHudCache();
   ui.showPlaying();
+
+  // Hasta el primer récord se enseña la mecánica: tocar rápido para flotar es
+  // lo que separa sobrevivir de jugar, y no se descubre por intuición.
+  if (storage.best === 0) ui.hint('TOCÁ RÁPIDO PARA FLOTAR');
+  else ui.clearHint();
+
   state = 'playing';
   uiShown = false;
   pendingResult = null;
@@ -115,6 +121,7 @@ function goMenu() {
   recorder = null;
   sessionAttempts = 0;
   fx.clear();
+  ui.clearHint();
   ui.setAttempt('');
   ui.showMenu('TOCÁ PARA INVERTIR LA GRAVEDAD');
 }
@@ -123,6 +130,7 @@ function handleDeath() {
   state = 'dead';
   deadAt = performance.now();
   uiShown = false;
+  ui.clearHint();
 
   fx.shake = 1;
   fx.flash = 1;
@@ -162,7 +170,9 @@ function handleDeath() {
     meters,
     orbs,
     maxCombo: sim.state.maxCombo,
-    record,
+    // En el primer run no había nada que superar: anunciar récord ahí le quita
+    // valor al cartel cuando de verdad rompés tu marca.
+    record: record && priorBest > 0,
     subtitle: mode === 'daily' ? `DAILY RUN · ${dayKey}` : 'UN TOQUE MÁS',
     attempt: mode === 'daily' ? `INTENTO ${storage.daily(dayKey).attempts}` : (sessionAttempts > 1 ? `INTENTO ${sessionAttempts}` : ''),
     progress,
@@ -360,6 +370,9 @@ if (debug) {
       orbs: sim ? sim.state.orbs : 0,
       combo: sim ? sim.state.combo : 0,
       playerY: sim ? Math.round(sim.state.player.y) : 0,
+      dir: sim ? sim.state.player.dir : 0,
+      vy: sim ? Math.round(sim.state.player.vy) : 0,
+      pendingFlips,
       dead: sim ? sim.state.dead : false,
       killer: sim && sim.state.killer ? sim.state.killer : null,
       obstacles: sim ? sim.state.level.obstacles.length : 0,
@@ -374,6 +387,7 @@ ui.setSoundMuted(audio.muted);
 layoutStage();
 goMenu();
 requestAnimationFrame(frame);
+window.__fliprunBooted = true;
 
 // En desarrollo el service worker sólo estorba: se registra en producción y se
 // desregistra explícitamente en local para no servir código viejo.
