@@ -7,27 +7,39 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Un runner de precisión de un solo toque. Invertí la gravedad, rozá los orbes, no frenes." />
   <title>FLIP//RUN</title>
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main id="app">
     <canvas id="game" aria-label="FLIP RUN"></canvas>
 
-    <section id="hud" class="hud hidden" aria-live="polite">
+    <!-- #stage se posiciona por JS sobre el campo de juego virtual, así toda la
+         UI queda alineada con lo jugable en cualquier proporción de pantalla. -->
+    <div id="stage">
+    <section id="hud" class="hud hidden" aria-live="off">
       <div class="hud-left">
         <div class="score" id="score">0</div>
-        <div class="best" id="best">BEST 0</div>
+        <div class="hud-sub">
+          <span id="best">BEST 0</span>
+          <span class="dot">·</span>
+          <span id="meters">0 M</span>
+        </div>
       </div>
       <div class="hud-right">
         <div id="combo" class="combo">x1</div>
+        <div class="decay"><div class="decay-fill" id="decayFill"></div></div>
         <div id="fever" class="fever hidden">FEVER</div>
       </div>
+      <div id="attempt" class="attempt hidden">INTENTO 1</div>
     </section>
 
     <section id="overlay" class="overlay">
-      <div class="logo-wrap">
+      <div id="logoWrap" class="logo-wrap">
         <div class="eyebrow">ONE TOUCH / ZERO BRAKES</div>
         <h1>FLIP<span>//</span>RUN</h1>
         <p id="subtitle">TOCÁ PARA INVERTIR LA GRAVEDAD</p>
@@ -36,22 +48,30 @@
       <div id="menu" class="panel">
         <button id="playBtn" class="primary">JUGAR</button>
         <button id="dailyBtn" class="secondary">DAILY RUN</button>
+        <div class="legend">
+          <span class="chip chip-orb"></span> Rozá los orbes para subir el multiplicador
+        </div>
         <div class="microcopy">Pantalla · Click · Espacio</div>
       </div>
 
       <div id="gameOver" class="panel hidden">
         <div id="newRecord" class="record hidden">NUEVO RÉCORD</div>
         <div id="finalScore" class="final-score">0</div>
-        <div id="runStats" class="stats">0 PERFECT · x1 MAX</div>
+        <div id="runStats" class="stats">0 M · 0 ORBES · x1 MAX</div>
+        <div class="progress">
+          <div class="progress-fill" id="progressFill"></div>
+          <span class="progress-label" id="progressLabel">RÉCORD</span>
+        </div>
         <button id="retryBtn" class="primary">OTRA</button>
-        <button id="homeBtn" class="secondary">MENÚ</button>
-        <div class="microcopy">También podés tocar cualquier parte para reiniciar</div>
+        <button id="homeBtn" class="ghost-btn">MENÚ</button>
+        <div class="microcopy">Tocá cualquier parte para reintentar al instante</div>
       </div>
     </section>
 
     <button id="soundBtn" class="sound" aria-label="Activar o desactivar sonido">♪</button>
     <div id="toast" class="toast"></div>
+    </div>
   </main>
-  <script src="game.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -1,54 +1,157 @@
 :root {
   color-scheme: dark;
   --bg: #070914;
-  --panel: rgba(9, 12, 28, 0.74);
   --line: rgba(255,255,255,.12);
   --text: #f8fbff;
   --muted: rgba(248,251,255,.58);
   --accent: #a8ff3e;
   --accent2: #6ce8ff;
+  --gold: #ffe23e;
+  /* Centésima del ancho del campo de juego. Lo fija el JS al redimensionar:
+     la UI escala con lo jugable y no con la ventana. */
+  --u: 1vw;
 }
 
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
-body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; touch-action: none; overscroll-behavior: none; user-select: none; }
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 button { font: inherit; }
 
-#app { position: relative; width: 100%; height: 100%; min-height: 100dvh; background: radial-gradient(circle at 50% 35%, #121a35 0%, #070914 58%, #03050a 100%); }
+#app { position: relative; width: 100%; height: 100%; min-height: 100dvh; background: var(--bg); }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#stage { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
 
-.hud { position: absolute; inset: max(14px, env(safe-area-inset-top)) 16px auto; display: flex; justify-content: space-between; pointer-events: none; z-index: 3; text-shadow: 0 3px 18px rgba(0,0,0,.7); }
-.score { font-weight: 900; font-size: clamp(34px, 9vw, 54px); line-height: .85; letter-spacing: -0.06em; }
-.best { margin-top: 8px; color: var(--muted); font-weight: 800; font-size: 11px; letter-spacing: .12em; }
-.hud-right { text-align: right; }
-.combo { font-weight: 1000; font-size: clamp(28px, 7vw, 44px); color: var(--accent2); }
-.fever { margin-top: 4px; display: inline-block; font-size: 12px; font-weight: 1000; letter-spacing: .2em; color: #10130a; background: var(--accent); padding: 6px 9px; border-radius: 999px; box-shadow: 0 0 28px rgba(168,255,62,.55); }
+/* ---------- HUD ---------- */
+.hud {
+  position: absolute;
+  inset: max(14px, env(safe-area-inset-top)) 16px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 3;
+  text-shadow: 0 3px 18px rgba(0,0,0,.75);
+}
+.score { font-weight: 900; font-size: clamp(30px, calc(var(--u) * 9), 52px); line-height: .85; letter-spacing: -0.06em; }
+.hud-sub { margin-top: 8px; display: flex; gap: 6px; color: var(--muted); font-weight: 800; font-size: 11px; letter-spacing: .12em; }
+.hud-sub .dot { opacity: .5; }
+.hud-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
+.combo { font-weight: 900; font-size: clamp(24px, calc(var(--u) * 7), 42px); color: var(--accent2); line-height: 1; }
+.combo.bump { animation: bump .18s ease-out; }
+@keyframes bump { from { transform: scale(1.32); } to { transform: scale(1); } }
 
-.overlay { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: max(24px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom)); pointer-events: none; }
-.logo-wrap { text-align: center; transform: translateY(-3vh); }
+/* Barra de decaimiento del combo: el castigo tiene que ser visible y previsible. */
+.decay { width: 74px; height: 4px; margin-top: 7px; border-radius: 99px; background: rgba(255,255,255,.14); overflow: hidden; }
+.decay-fill { width: 100%; height: 100%; border-radius: 99px; background: var(--accent2); transform-origin: right center; transform: scaleX(0); }
+
+.fever {
+  margin-top: 8px; display: inline-block; font-size: 11px; font-weight: 900; letter-spacing: .2em;
+  color: #10130a; background: var(--accent); padding: 5px 9px; border-radius: 999px;
+  box-shadow: 0 0 28px rgba(168,255,62,.55);
+  animation: feverPulse .7s ease-in-out infinite alternate;
+}
+@keyframes feverPulse { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+
+.attempt {
+  position: absolute; left: 50%; top: 4px; transform: translateX(-50%);
+  font-size: 10px; font-weight: 900; letter-spacing: .22em; color: rgba(255,255,255,.42);
+  white-space: nowrap;
+}
+
+/* ---------- Overlay ---------- */
+.overlay {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(3,5,10,.58) 0%, rgba(3,5,10,.34) 60%, rgba(3,5,10,.1) 100%);
+}
+.logo-wrap { text-align: center; text-shadow: 0 4px 26px rgba(0,0,0,.8); }
 .eyebrow { font-size: 10px; letter-spacing: .25em; color: var(--muted); font-weight: 900; }
-h1 { margin: 7px 0 10px; font-size: clamp(52px, 17vw, 92px); line-height: .86; letter-spacing: -0.085em; font-style: italic; font-weight: 1000; filter: drop-shadow(0 0 26px rgba(108,232,255,.2)); }
+h1 {
+  margin: 7px 0 10px; font-size: clamp(46px, calc(var(--u) * 16), 88px); line-height: .86; letter-spacing: -0.085em;
+  font-style: italic; font-weight: 900; filter: drop-shadow(0 0 26px rgba(108,232,255,.22));
+}
 h1 span { color: var(--accent); }
-#subtitle { margin: 0; font-size: clamp(12px, 3.6vw, 16px); letter-spacing: .1em; color: rgba(255,255,255,.74); font-weight: 850; }
+#subtitle { margin: 0; font-size: clamp(11px, calc(var(--u) * 3.4), 15px); letter-spacing: .1em; color: rgba(255,255,255,.74); font-weight: 800; }
 
-.panel { width: min(92vw, 360px); display: grid; gap: 10px; pointer-events: auto; }
-button { border: 0; min-height: 54px; border-radius: 16px; cursor: pointer; font-weight: 950; letter-spacing: .07em; transition: transform .08s ease, filter .15s ease, opacity .15s ease; }
+/* Tarjeta con fondo propio: el panel tiene que leerse sobre los obstáculos,
+   pero sin tapar el campo entero para que se siga viendo qué te mató. */
+.panel {
+  width: min(92%, 360px); display: grid; gap: 10px; pointer-events: auto;
+  padding: 16px; border-radius: 22px;
+  background: rgba(6, 9, 20, .82);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .55);
+}
+button {
+  border: 0; min-height: 54px; border-radius: 16px; cursor: pointer; font-weight: 900; letter-spacing: .07em;
+  transition: transform .08s ease, filter .15s ease, opacity .15s ease;
+}
 button:active { transform: scale(.97); }
 .primary { background: var(--accent); color: #0d1108; box-shadow: 0 12px 46px rgba(168,255,62,.22); }
 .secondary { background: rgba(255,255,255,.07); color: white; border: 1px solid var(--line); backdrop-filter: blur(14px); }
-.microcopy { text-align: center; color: rgba(255,255,255,.38); font-size: 10px; letter-spacing: .08em; margin-top: 4px; }
+.ghost-btn { background: transparent; color: rgba(255,255,255,.5); min-height: 44px; }
+.microcopy { text-align: center; color: rgba(255,255,255,.34); font-size: 10px; letter-spacing: .08em; margin-top: 2px; }
 
-.final-score { font-size: clamp(74px, 22vw, 116px); font-weight: 1000; line-height: .8; letter-spacing: -.08em; text-align: center; margin-bottom: 8px; text-shadow: 0 0 32px rgba(108,232,255,.2); }
-.record { justify-self: center; color: #10130a; background: var(--accent); border-radius: 999px; padding: 7px 11px; font-size: 11px; font-weight: 1000; letter-spacing: .14em; }
-.stats { text-align: center; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .07em; margin-bottom: 8px; }
+.legend {
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; color: rgba(255,255,255,.5);
+}
+.chip { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.chip-orb { background: var(--gold); box-shadow: 0 0 14px rgba(255,226,62,.8); }
 
-.sound { position: absolute; z-index: 7; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); width: 42px; min-height: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,.07); color: rgba(255,255,255,.65); border: 1px solid var(--line); backdrop-filter: blur(12px); }
+/* ---------- Game over ---------- */
+.final-score {
+  font-size: clamp(62px, calc(var(--u) * 21), 110px); font-weight: 900; line-height: .8; letter-spacing: -.08em;
+  text-align: center; margin-bottom: 6px; text-shadow: 0 0 32px rgba(108,232,255,.22);
+}
+.record {
+  justify-self: center; color: #10130a; background: var(--accent); border-radius: 999px; padding: 7px 11px;
+  font-size: 11px; font-weight: 900; letter-spacing: .14em;
+}
+.stats { text-align: center; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .07em; }
+
+/* Progreso contra tu propio récord: el "casi lo tenía" hecho explícito. */
+.progress { position: relative; height: 26px; border-radius: 8px; background: rgba(255,255,255,.07); border: 1px solid var(--line); overflow: hidden; margin-bottom: 6px; }
+.progress-fill { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(108,232,255,.28), rgba(168,255,62,.42)); transform-origin: left center; transform: scaleX(0); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+.progress-label {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 900; letter-spacing: .14em; color: #fff;
+  text-shadow: 0 1px 6px rgba(0,0,0,.9);
+}
+
+/* ---------- Varios ---------- */
+.sound {
+  position: absolute; z-index: 7; right: 14px; bottom: max(14px, env(safe-area-inset-bottom));
+  width: 42px; min-height: 42px; height: 42px; border-radius: 50%;
+  background: rgba(255,255,255,.07); color: rgba(255,255,255,.65); border: 1px solid var(--line); backdrop-filter: blur(12px);
+}
 .sound.muted { opacity: .45; }
-.toast { position: absolute; left: 50%; top: 34%; z-index: 6; transform: translate(-50%, -50%) scale(.8); opacity: 0; pointer-events: none; font-size: clamp(28px, 9vw, 54px); font-weight: 1000; letter-spacing: -.04em; white-space: nowrap; text-shadow: 0 4px 24px rgba(0,0,0,.7); transition: opacity .12s ease, transform .12s ease; }
+
+.toast {
+  position: absolute; left: 50%; top: 32%; z-index: 6;
+  transform: translate(-50%, -50%) scale(.8); opacity: 0; pointer-events: none;
+  font-size: clamp(26px, calc(var(--u) * 8), 48px); font-weight: 900; letter-spacing: -.04em; white-space: nowrap;
+  text-shadow: 0 4px 24px rgba(0,0,0,.75);
+  transition: opacity .12s ease, transform .12s ease;
+}
 .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.toast.fever { color: var(--accent); }
+.toast.combo { color: var(--accent2); }
 
 .hidden { display: none !important; }
 
-@media (min-width: 800px) {
-  #app::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 120px rgba(0,0,0,.38); }
+@media (prefers-reduced-motion: reduce) {
+  .combo.bump, .fever { animation: none; }
+  .progress-fill { transition: none; }
 }

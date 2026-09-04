@@ -2,9 +2,16 @@
   "name": "FLIP//RUN",
   "short_name": "FLIPRUN",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#070914",
   "theme_color": "#070914",
   "orientation": "portrait-primary",
-  "description": "Un runner reactivo de un solo toque. Invertí la gravedad. No frenes."
+  "categories": ["games"],
+  "description": "Un runner de precisión de un solo toque. Invertí la gravedad, rozá los orbes, no frenes.",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }
