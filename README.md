@@ -2,6 +2,8 @@
 
 Runner de precisión de un solo toque. Invertís la gravedad, rozás los orbes, no frenás.
 
+Jugalo en **https://donmariando.github.io/Flip_Run/**
+
 ## La tesis de diseño
 
 Lo adictivo de este género no son las skins ni los desbloqueos: es el **"uf, casi"**.
@@ -218,6 +220,13 @@ El campo de juego es un viewport virtual fijo de **540x960** escalado con letter
 Así el juego es idéntico en cualquier pantalla: la ventana de reacción, los tamaños de
 los huecos y el score son los mismos para todos, que es condición para que un ranking
 tenga sentido.
+
+## GitHub Pages
+
+El juego es un sitio estático. Cada push a `main` lo publica
+[actions/deploy-pages](https://github.com/actions/deploy-pages) en
+`https://donmariando.github.io/Flip_Run/`. `.nojekyll` está para que GitHub no pase
+los archivos por Jekyll: los módulos de `src/` no necesitan procesamiento.
 
 ## Subir a itch.io
 
